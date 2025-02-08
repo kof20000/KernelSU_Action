@@ -69,6 +69,7 @@ jobs:
             echo "FORMAT_MKBOOTING=$(echo `tools/unpack_bootimg.py --boot_img=boot-source.img --format mkbootimg`)" >> $GITHUB_ENV
             echo "HAVE_SOURCE_BOOT_IMAGE=true" >> $GITHUB_ENV
         fi
+        
             - name: Setup KernelSU
             if: env.ENABLE_KERNELSU == 'true'
         run: |
@@ -84,6 +85,7 @@ jobs:
           mv $GITHUB_WORKSPACE/patches/nongki/kernel/cred.c kernel/cred.c
           mv $GITHUB_WORKSPACE/patches/nongki/include/linux/cred.h include/linux/cred.h
           mv $GITHUB_WORKSPACE/patches/nongki/fs/namespace.c fs/namespace.c
+          
           name: Setup Configuration for Kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
@@ -114,6 +116,7 @@ jobs:
           if [ ${{ env.DISABLE_CC_WERROR }} = true ]; then
               echo "CONFIG_CC_WERROR=n" >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
           fi
+          
           - name: Setup SUSFS For KernelSU Environment&Kernel Config
         if: env.ENABLE_SUSFS == 'true'
         run: |
@@ -141,6 +144,7 @@ jobs:
           echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y"  >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y"  >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
           echo "SUSFS_KERNEL_VERSION=$(head -n 1 $GITHUB_WORKSPACE/kernel_workspace/android-kernel/Makefile|grep 'VERSION'|awk -F '= ' '{print $2}').$(head -n 2 $GITHUB_WORKSPACE/kernel_workspace/android-kernel/Makefile|grep 'PATCHLEVEL'|awk -F '= ' '{print $2}')" >> $GITHUB_ENV
+          
           - name: Setup SUSFS For KernelSU
         if: env.ENABLE_SUSFS == 'true'
         run: |
@@ -164,6 +168,7 @@ jobs:
         with:
           key: build-kernel-${{ env.DEVICE }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}
           max-size: 2g
+          
           - name: Build kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
@@ -199,8 +204,8 @@ jobs:
                   exit 1
               fi
           fi
-
-      - name: Make Anykernel3
+          
+          - name: Make Anykernel3
         if: env.CHECK_FILE_IS_OK == 'true' && env.USE_CUSTOM_ANYKERNEL3 != 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
@@ -213,8 +218,8 @@ jobs:
               cp android-kernel/out/arch/${{ env.ARCH }}/boot/dtbo.img AnyKernel3/
           fi
           rm -rf AnyKernel3/.git* AnyKernel3/README.md
-
-      - name: Make Custom-Anykernel3
+          
+          - name: Make Custom-Anykernel3
         if: env.CHECK_FILE_IS_OK == 'true' && env.USE_CUSTOM_ANYKERNEL3 == 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
@@ -236,8 +241,8 @@ jobs:
               cp android-kernel/out/arch/${{ env.ARCH }}/boot/dtbo.img AnyKernel3/
           fi
           rm -rf AnyKernel3/.git* AnyKernel3/README.md
-
-      - name: Make boot image
+          
+          - name: Make boot image
         if: env.HAVE_SOURCE_BOOT_IMAGE == 'true' && env.CHECK_FILE_IS_OK == 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
@@ -250,29 +255,29 @@ jobs:
               echo "Boot image is empty"
               exit 1
           fi
-
-      - name: Upload ${{ env.KERNEL_IMAGE_NAME }}
+          
+          - name: Upload ${{ env.KERNEL_IMAGE_NAME }}
         if: env.CHECK_FILE_IS_OK == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.KERNEL_IMAGE_NAME }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
           path: kernel_workspace/android-kernel/out/arch/${{ env.ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }}
-
-      - name: Upload AnyKernel3
+          
+          - name: Upload AnyKernel3
         if: env.CHECK_FILE_IS_OK == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: AnyKernel3${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
           path: kernel_workspace/AnyKernel3/*
-
-      - name: Upload DTBO image
+        
+        - name: Upload DTBO image
         if: env.CHECK_DTBO_IS_OK == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: dtbo-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
           path: kernel_workspace/android-kernel/out/arch/${{ env.ARCH }}/boot/dtbo.img
-
-      - name: Upload boot image
+          
+          - name: Upload boot image
         if: env.MAKE_BOOT_IMAGE_IS_OK == 'true'
         uses: actions/upload-artifact@v4
         with:
