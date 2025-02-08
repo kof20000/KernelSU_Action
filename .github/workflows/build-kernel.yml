@@ -59,37 +59,32 @@ jobs:
       uses: pierotofy/set-swap-space@master
       with:
         swap-size-gb: 10
-        
-          
-  - name: Download source boot image
-      if: env.BUILD_BOOT_IMG == 'true'
-      run: |
+  
+  name: Download source boot image
+  if: env.BUILD_BOOT_IMG == 'true'
+  run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         wget -O boot-source.img ${{ env.SOURCE_BOOT_IMAGE }}
         if [ -f boot-source.img ]; then
             echo "FORMAT_MKBOOTING=$(echo `tools/unpack_bootimg.py --boot_img=boot-source.img --format mkbootimg`)" >> $GITHUB_ENV
             echo "HAVE_SOURCE_BOOT_IMAGE=true" >> $GITHUB_ENV
         fi
-          
-
-
-      - name: Setup KernelSU
-        if: env.ENABLE_KERNELSU == 'true'
+            - name: Setup KernelSU
+            if: env.ENABLE_KERNELSU == 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
           curl -LSs "${{ env.KERNELSU_SETUP_SOURCE }}" | bash -s ${{ env.KERNELSU_TAG }}
           KSU_VERSION=$(cd ${{ env.KERNELSU_TYPE }} && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
           echo "UPLOADNAME=-${{ env.KERNELSU_TYPE }}_$KSU_VERSION" >> $GITHUB_ENV
-
-      - name: Setup KernelSU Non-GKI Patch
-        if: env.ENABLE_KERNELSU_NONGKI_PATCH == 'true'
+          
+          - name: Setup KernelSU Non-GKI Patch
+         if: env.ENABLE_KERNELSU_NONGKI_PATCH == 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
           mv $GITHUB_WORKSPACE/patches/nongki/kernel/cred.c kernel/cred.c
           mv $GITHUB_WORKSPACE/patches/nongki/include/linux/cred.h include/linux/cred.h
           mv $GITHUB_WORKSPACE/patches/nongki/fs/namespace.c fs/namespace.c
-
-      - name: Setup Configuration for Kernel
+          name: Setup Configuration for Kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
           if [ ${{ env.APPLY_KSU_PATCH }} = true ]; then
@@ -119,8 +114,7 @@ jobs:
           if [ ${{ env.DISABLE_CC_WERROR }} = true ]; then
               echo "CONFIG_CC_WERROR=n" >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
           fi
-
-      - name: Setup SUSFS For KernelSU Environment&Kernel Config
+          - name: Setup SUSFS For KernelSU Environment&Kernel Config
         if: env.ENABLE_SUSFS == 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
@@ -147,8 +141,7 @@ jobs:
           echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y"  >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y"  >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
           echo "SUSFS_KERNEL_VERSION=$(head -n 1 $GITHUB_WORKSPACE/kernel_workspace/android-kernel/Makefile|grep 'VERSION'|awk -F '= ' '{print $2}').$(head -n 2 $GITHUB_WORKSPACE/kernel_workspace/android-kernel/Makefile|grep 'PATCHLEVEL'|awk -F '= ' '{print $2}')" >> $GITHUB_ENV
-
-      - name: Setup SUSFS For KernelSU
+          - name: Setup SUSFS For KernelSU
         if: env.ENABLE_SUSFS == 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
@@ -164,15 +157,14 @@ jobs:
           patch -p1 < 10_enable_susfs_for_ksu.patch
           cd ../
           patch -p1 < 50_add_susfs_in_kernel-$SUSFS_KERNEL_VERSION.patch
-
-      - name: Setup ccache
+          
+          name: Setup ccache
         if: env.ENABLE_CCACHE == 'true'
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: build-kernel-${{ env.DEVICE }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}
-          max-size: 2G
-
-      - name: Build kernel
+          max-size: 2g
+          - name: Build kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
 
@@ -189,8 +181,8 @@ jobs:
           else
               make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.GCC_64 }} ${{ env.GCC_32 }}
           fi
-
-      - name: Check a kernel output files
+          
+          - name: Check a kernel output files
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
           if [ -f android-kernel/out/arch/${{ env.ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }} ]; then
