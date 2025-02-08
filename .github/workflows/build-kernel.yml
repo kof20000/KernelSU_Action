@@ -186,7 +186,7 @@ jobs:
             echo "GCC_32=CROSS_COMPILE_ARM32=$GITHUB_WORKSPACE/kernel_workspace/gcc-32/bin/${{ env.CUSTOM_GCC_32_BIN }}" >> $GITHUB_ENV
           fi
 
-   - name: Download mkbootimg tools
+  - name: Download mkbootimg tools
      if: env.BUILD_BOOT_IMG == 'true'
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
