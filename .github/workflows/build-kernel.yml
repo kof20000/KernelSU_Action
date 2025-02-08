@@ -59,8 +59,8 @@ jobs:
       uses: pierotofy/set-swap-space@master
       with:
         swap-size-gb: 10
-  
-- name: Download clang-416183b1 and gcc-4.9
+    
+    - name: Download clang-416183b1 and gcc-4.9
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         mkdir ./clang-aosp 
